@@ -1,0 +1,139 @@
+Sure, here's an example of a Spring Boot application with a login page and employee registration using MongoDB.
+
+First, let's create the required POJO classes.
+
+Employee.java:
+
+```java
+package com.example.demo.model;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "employees")
+public class Employee {
+    @Id
+    private String id;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String password;
+    
+    // Constructors, getters, and setters
+}
+```
+
+Next, we need to create a controller class to handle requests.
+
+EmployeeController.java:
+
+```java
+package com.example.demo.controller;
+
+import com.example.demo.model.Employee;
+import com.example.demo.repository.EmployeeRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+@Controller
+public class EmployeeController {
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @GetMapping("/")
+    public String showLoginPage(Model model) {
+        model.addAttribute("employee", new Employee());
+        return "login";
+    }
+
+    @PostMapping("/login")
+    public String login(@ModelAttribute("employee") Employee employee, Model model) {
+        Employee foundEmployee = employeeRepository.findByEmail(employee.getEmail());
+        if (foundEmployee != null && foundEmployee.getPassword().equals(employee.getPassword())) {
+            model.addAttribute("employee", foundEmployee);
+            return "success";
+        } else {
+            model.addAttribute("error", "Invalid email or password");
+            return "login";
+        }
+    }
+
+    @GetMapping("/register")
+    public String showRegistrationPage(Model model) {
+        model.addAttribute("employee", new Employee());
+        return "register";
+    }
+
+    @PostMapping("/register")
+    public String register(@ModelAttribute("employee") Employee employee, Model model) {
+        Employee foundEmployee = employeeRepository.findByEmail(employee.getEmail());
+        if (foundEmployee != null) {
+            model.addAttribute("error", "Email already registered");
+            return "register";
+        } else {
+            employeeRepository.save(employee);
+            model.addAttribute("message", "Registration successful");
+            return "login";
+        }
+    }
+}
+```
+
+In this controller, we handle GET and POST requests for the login and registration pages. We also use the `EmployeeRepository` to interact with the MongoDB database.
+
+Next, we need to create a repository interface to interact with MongoDB.
+
+EmployeeRepository.java:
+
+```java
+package com.example.demo.repository;
+
+import com.example.demo.model.Employee;
+import org.springframework.data.mongodb.repository.MongoRepository;
+
+public interface EmployeeRepository extends MongoRepository<Employee, String> {
+    Employee findByEmail(String email);
+}
+```
+
+This repository extends `MongoRepository` and provides a method to find an `Employee` object by email.
+
+Now let's create the main class.
+
+DemoApplication.java:
+
+```java
+package com.example.demo;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class DemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+}
+```
+
+Finally, we need to create a pom.xml file with the required dependencies.
+
+pom.xml:
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-mongodb</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-thymeleaf</artifactId>
+    </dependency>
+</dependencies>
+```
+
+With all of these components in place, we should now have a fully functional Spring Boot application with a login page and employee registration using MongoDB.
